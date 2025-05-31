@@ -1,31 +1,49 @@
 import 'package:flutter/material.dart';
-import 'package:whazlansaja/data_saya.dart';
 
-class PesanScreen extends StatelessWidget {
-  const PesanScreen({super.key});
+class PesanScreen extends StatefulWidget {
+  final Map dosenData;
+  const PesanScreen({super.key, required this.dosenData});
+
+  @override
+  State<PesanScreen> createState() => _PesanScreenState();
+}
+
+class _PesanScreenState extends State<PesanScreen> {
+  final TextEditingController _controller = TextEditingController();
+  late List messages;
+
+  @override
+  void initState() {
+    super.initState();
+    messages = List.from(widget.dosenData['details']);
+  }
+
+  void kirimPesan() {
+    if (_controller.text.trim().isEmpty) return;
+    setState(() {
+      messages.add({
+        'role': 'saya',
+        'message': _controller.text.trim(),
+      });
+      _controller.clear();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
+    final nama = widget.dosenData['name'];
+    final img = widget.dosenData['img'];
+    final colorScheme = Theme.of(context).colorScheme;
 
     return Scaffold(
       appBar: AppBar(
         leadingWidth: 29,
         elevation: 2,
-        title: const ListTile(
-          contentPadding: EdgeInsets.all(0),
-          leading: CircleAvatar(
-            backgroundImage:
-                AssetImage('assets/gambar_dosen/Azlan, S.Kom., M.Kom.jpg'),
-            radius: 16,
-          ),
-          title: Text(
-            'Azlan, S.Kom., M.Kom',
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-          subtitle: Text('06.30'),
+        title: ListTile(
+          contentPadding: EdgeInsets.zero,
+          leading: CircleAvatar(backgroundImage: AssetImage(img), radius: 16),
+          title: Text(nama, maxLines: 1, overflow: TextOverflow.ellipsis),
+          subtitle: const Text('06.30'),
         ),
         actions: [
           IconButton(onPressed: () {}, icon: const Icon(Icons.video_call)),
@@ -34,19 +52,16 @@ class PesanScreen extends StatelessWidget {
         ],
       ),
       body: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Expanded(
             child: ListView.builder(
-              itemCount: 5,
+              itemCount: messages.length,
               itemBuilder: (context, index) {
-                final isDosen = index % 2 == 0;
-
+                final chat = messages[index];
+                final isDosen = chat['role'] == 'dosen';
                 return Padding(
-                  padding: const EdgeInsets.symmetric(
-                    vertical: 8,
-                    horizontal: 12,
-                  ),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   child: Row(
                     mainAxisAlignment: isDosen
                         ? MainAxisAlignment.start
@@ -54,18 +69,12 @@ class PesanScreen extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       if (isDosen)
-                        const CircleAvatar(
-                          backgroundImage: AssetImage(
-                              'assets/gambar_dosen/Azlan, S.Kom., M.Kom.jpg'),
-                          radius: 14,
-                        ),
+                        CircleAvatar(
+                            backgroundImage: AssetImage(img), radius: 14),
                       Flexible(
                         child: Container(
-                          padding: const EdgeInsets.all(10),
                           margin: const EdgeInsets.symmetric(horizontal: 10),
-                          constraints: BoxConstraints(
-                            maxWidth: MediaQuery.of(context).size.width * 0.65,
-                          ),
+                          padding: const EdgeInsets.all(10),
                           decoration: BoxDecoration(
                             color: isDosen
                                 ? colorScheme.tertiary
@@ -78,7 +87,7 @@ class PesanScreen extends StatelessWidget {
                             ),
                           ),
                           child: Text(
-                            'index ke-$index ini adalah contoh chat. Silahkan ambil data chat dari file json.',
+                            chat['message'],
                             style: TextStyle(
                               fontSize: 15,
                               color: isDosen
@@ -89,10 +98,8 @@ class PesanScreen extends StatelessWidget {
                         ),
                       ),
                       if (!isDosen)
-                        CircleAvatar(
-                          backgroundImage: AssetImage(
-                            DataSaya.gambar,
-                          ),
+                        const CircleAvatar(
+                          backgroundImage: AssetImage('assets/poto.jpg'),
                           radius: 14,
                         ),
                     ],
@@ -103,12 +110,16 @@ class PesanScreen extends StatelessWidget {
           ),
           Padding(
             padding: const EdgeInsets.all(12),
-            child: TextFormField(
+            child: TextField(
+              controller: _controller,
               minLines: 1,
               maxLines: 3,
-              decoration: const InputDecoration(
-                prefixIcon: Icon(Icons.emoji_emotions),
-                suffixIcon: Icon(Icons.send),
+              decoration: InputDecoration(
+                prefixIcon: const Icon(Icons.emoji_emotions),
+                suffixIcon: IconButton(
+                  icon: const Icon(Icons.send),
+                  onPressed: kirimPesan,
+                ),
                 hintText: 'Ketikkan pesan',
                 filled: true,
               ),
